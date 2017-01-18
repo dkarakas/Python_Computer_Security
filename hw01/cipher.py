@@ -16,18 +16,24 @@ while True:
     chIn = PLAIN_TEXT.read(1)           #reading one char at a time
     if( not chIn ) or ( chIn == '\n' ):    #checks if we had reached the end of the file
         break
-    if( curIndexKey >= key_len):
-        curIndexKey = 0
-    pos_to_move = abs(ord('A') - ord(key[curIndexKey]))     #computing how much should i move the encryption key
+    if( curIndexKey > key_len):
+        curIndexKey = 0 
+    
+    #computing how much should i move the encryption key
+    if( (ord(key[curIndexKey]) > 64) and (ord(key[curIndexKey]) < 91) ): #if it is uppercase
+        pos_to_move = abs(ord('A') - ord(key[curIndexKey]))
+    elif( (ord(key[curIndexKey]) > 96) and (ord(key[curIndexKey]) < 173) ): #if it is lowercase
+        pos_to_move = abs(ord('A') - ord(key[curIndexKey]) + 6)
+
     encryptCh = ord(chIn) + pos_to_move
     if( encryptCh > 122):
         encryptCh = ( encryptCh - 122 ) + 65
-    if ( encryptCh > 90 ) and ( encryptCh < 97 ):
-        encryptCh = encryptCh + 6
+    #if ( encryptCh > 90 ) and ( encryptCh < 97 ):
+    #    encryptCh = encryptCh + 6
     OUTPUT_TEXT.write(chr(encryptCh))
-    print "input: " + chIn  + " "\
+    print("input: " + chIn  + " "\
             "key: " + key[curIndexKey] + " " + \
-            str(pos_to_move) + "Encrypted char: " + chr(encryptCh)
+            str(pos_to_move) + "Encrypted char: " + chr(encryptCh))
     curIndexKey += 1                    #moving through the key
 
 #Closing files
