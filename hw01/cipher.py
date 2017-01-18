@@ -20,6 +20,7 @@ while True:
         curIndexKey = 0
 
 
+
 """
 for inputa in read:
     print(inputa+ "\n" )
