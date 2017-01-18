@@ -18,6 +18,8 @@ while True:
 
     if(curIndexKey >= curIndexKey):
         curIndexKey = 0
+
+
 """
 for inputa in read:
     print(inputa+ "\n" )
