@@ -18,6 +18,11 @@ key_permutation_2 = [13,16,10,23,0,4,2,27,14,5,20,9,22,18,11,
                      54,29,39,50,44,32,47,43,48,38,55,33,52,
                      45,41,49,35,28,31]
 
+p_box_perm = [15, 6, 19, 20, 28, 11, 27, 16,
+              0, 14, 22, 25, 4, 17, 30 , 9,
+              1, 7, 23 , 13, 31, 26, 2, 8,
+              18, 12, 29, 5, 21, 10, 3 ,24]
+
 shifts_for_round_key_gen = [1,1,2,2,2,2,2,2,1,2,2,2,2,2,2,1]
 
 s_boxes = {i:None for i in range(8)}
@@ -78,63 +83,50 @@ def get_encryption_key():
     #perm choice 1
     key = key.permute(key_permutation_1)
 
-    #this causes permutation error
-    #key = key.unpermute(key_permutation_1)
-    #print(key)
     return key
 
 def extract_round_key( key_after_per_1 ):
     round_key_list = [] 
-    key_temp = key_after_per_1.deep_copy()
+    key_temp = key_after_per_1.deep_copy()                   #copys the key so I don't mess the original version
     for round in range(16):
         [left_half, right_half] = key_temp.divide_into_two() #separating the key into two parts
 
-        left_half << shifts_for_round_key_gen[round]                #shifting each part
+        left_half << shifts_for_round_key_gen[round]         #shifting each half
         right_half << shifts_for_round_key_gen[round] 
 
-        key_temp = left_half + right_half                     #combining the new halfs
-        round_key = key_temp.permute(key_permutation_2)       #making the key to 46 bits
+        key_temp = left_half + right_half                    #combining the new halfs
+        round_key = key_temp.permute(key_permutation_2)      #making the key to 46 bits
         round_key_list.append(round_key)
     return round_key_list
 
+def s_box_substitution ( out_xor ):
+    output = BitVector( size = 32 )                         #new vector created for output
+    six_bit_seg = [ out_xor[x:x+6] for x in range(48) if x % 6 == 0 ]  #seperates the 48 bit to 6 parts of 8 bits
+    counter = 0                                             #keep track how many 4 bits were written
+    for seg in six_bit_seg:
+        row = 2*seg[0] + seg[5]                             #finds the row and column of the s-table
+        column = int(seg[1:5])
+        output[counter*4:counter*4+4] = BitVector( intVal = s_boxes[counter][row][column], size = 4)
+        counter += 1
+    return output
+
 def encrypt():
     key = get_encryption_key()
-    round_key = extract_round_key( key )
-    bv = BitVector( 'filename.txt' )
+    round_keys = extract_round_key( key )                   #finds an array of keys for each round of encryption
+    fileOutput = open("encrypted.txt","wb")
+    bv = BitVector(filename = 'message.txt' )
     while (bv.more_to_read):
         bitvec = bv.read_bits_from_file( 64 )
-        if bitvec.getsize() > 0:
-            [LE, RE] = bitvec.divide_into_two()
-            newRE = RE.permute( expansion_permutation )
-            out_xor = newRE.bv_xor( round_key )
+        if bitvec.length() > 0:                             #Note: is is true?
+            for round_key in round_keys:
+                [LE, RE] = bitvec.divide_into_two()         #splits into two halfs
+                newRE = RE.permute( expansion_permutation ) #expansion permutation
+                out_xor = newRE ^ round_key                 #xoring the round key and epanded perm
+                newRE = s_box_substitution( out_xor )       #using s-tables and output 32 bits
+                newRE = newRE.permute( p_box_perm )         #p-box perm    
+                newRE = LE ^ newRE                          
+                LE = RE
+                bitvec = LE + newRE
+            bitvec.write_to_file(fileOutput)
 
-            '''
-            now comes the hard part --- the substition boxes
-
-            Let's say after the substitution boxes and another
-            permutation (P in Section 3.3.4), the output for RE is
-            RE_modified.
-
-            When you join the two halves of the bit string
-            again, the rule to follow (from Fig. 4 in page 21) is
-            either
-
-            final_string = RE followed by (RE_modified xored with LE)
-
-            or
-
-            final_string = LE followed by (LE_modified xored with RE)
-
-            depending upon whether you prefer to do the substitutions
-            in the right half (as shown in Fig. 4) or in the left
-            half.
-
-            The important thing to note is that the swap between the
-            two halves shown in Fig. 4 is essential to the working
-            of the algorithm even in a single-round implementation
-            of the cipher, especially if you want to use the same
-            algorithm for both encryption and decryption (see Fig.
-            3 page 15). The two rules shown above include this swap.
-            '''
-key = get_encryption_key()
-round_key = extract_round_key( key )
+encrypt()
