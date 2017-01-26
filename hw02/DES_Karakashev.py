@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-### encrypt.py
+## Dimcho Karakashev
+### Encryption of file
 
 import sys
 import os
@@ -53,7 +54,7 @@ s_boxes[3] = [ [7,13,14,3,0,6,9,10,1,2,8,5,11,12,4,15],
 s_boxes[4] = [ [2,12,4,1,7,10,11,6,8,5,3,15,13,0,14,9],
                [14,11,2,12,4,7,13,1,5,0,15,10,3,9,8,6],
                [4,2,1,11,10,13,7,8,15,9,12,5,6,3,0,14],
-               [11,8,12,7,1,14,2,13,6,15,0,9,10,4,5,3] ]  
+               [11,8,12,7,1,14,2,13,6,15,0,9,10,4,5,3] ]
 
 s_boxes[5] = [ [12,1,10,15,9,2,6,8,0,13,3,4,14,7,5,11],
                [10,15,4,2,7,12,9,5,6,1,13,14,0,11,3,8],
@@ -69,8 +70,6 @@ s_boxes[7] = [ [13,2,8,4,6,15,11,1,10,9,3,14,5,0,12,7],
                [1,15,13,8,10,3,7,4,12,5,6,11,0,14,9,2],
                [7,11,4,1,9,12,14,2,0,6,10,13,15,3,5,8],
                [2,1,14,7,4,10,8,13,15,12,9,0,3,5,6,11] ]
-
-
 
 
 def get_encryption_key():
@@ -129,21 +128,25 @@ def encrypt():
     enc_or_dec=get_enc_or_dec()
 
     if enc_or_dec == "d":
-        fileOutput = open('decrypted.txt', 'wb')
+        try:
+            fileOutput = open('decrypted.txt', 'wb')
+        except:
+            print("Error opening decrypted.txt")
+            sys.exit(1)
         round_keys.reverse()
         bv = BitVector(filename='encrypted.txt')
     else:
-        fileOutput = open('encrypted.txt', 'wb')
-        if not os.access("encrypted.txt", os.W_OK):
-            print("Can't open the file because it is not writable")
-            sys.exit(2)
-        bv = BitVector(filename='message_org.txt')
+        try:
+            fileOutput = open('encrypted.txt', 'wb')
+        except:
+            print("Error opening encrypted.txt")
+            sys.exit(1)
+        bv = BitVector(filename='message.txt')
 
     while bv.more_to_read:
         bitvec = bv.read_bits_from_file( 64 )
         size = bitvec.length()
         if size > 0:                             #Note: is is true?
-            print(str(size))
             if size < 64:
                 bitvec.pad_from_right(64 - size)
             [LE, RE] = bitvec.divide_into_two()  # splits into two halfs
