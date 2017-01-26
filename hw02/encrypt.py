@@ -27,7 +27,8 @@ p_box_perm = [15, 6, 19, 20, 28, 11, 27, 16,
 
 shifts_for_round_key_gen = [1,1,2,2,2,2,2,2,1,2,2,2,2,2,2,1]
 
-s_boxes = {i:None for i in range(8)}
+s_boxes = [None,None,None,None,None,None,None,None]
+
 
 s_boxes[0] = [ [14,4,13,1,2,15,11,8,3,10,6,12,5,9,0,7],
                [0,15,7,4,14,2,13,1,10,6,12,11,9,5,3,8],
@@ -111,11 +112,12 @@ def extract_round_key( key_after_per_1 ):
 
 def s_box_substitution ( out_xor ):
     output = BitVector( size = 32 )                         #new vector created for output
-    six_bit_seg = [ out_xor[x:x+6] for x in range(48) if x % 6 == 0 ]  #seperates the 48 bit to 6 parts of 8 bits
+    #six_bit_seg = [ out_xor[x:x+6] for x in range(48) if x % 6 == 0 ]  #seperates the 48 bit to 6 parts of 8 bits
+    six_bit_seg = [ out_xor[x*6:x*6+6] for x in range(8)]
     counter = 0                                             #keep track how many 4 bits were written
     for seg in six_bit_seg:
-        row = 2*seg[0] + seg[5]                             #finds the row and column of the s-table
-        column = int(seg[1:5])
+        row = 2*seg[0] + seg[-1]                             #finds the row and column of the s-table
+        column = int(seg[1:-1])
         output[counter*4:counter*4+4] = BitVector( intVal = s_boxes[counter][row][column], size = 4)
         counter += 1
     return output
@@ -129,9 +131,6 @@ def encrypt():
 
     if enc_or_dec == "d":
         fileOutput = open('decrypted.txt', 'wb')
-        if not os.access("decrypted.txt", os.W_OK):
-            print "Can't open the file because it is not writable"
-            sys.exit(2)
         round_keys.reverse()
     else:
         if not os.access("encrypted.txt", os.W_OK):
@@ -144,7 +143,8 @@ def encrypt():
         bitvec = bv.read_bits_from_file( 64 )
         size = bitvec.length()
         if size > 0:                             #Note: is is true?
-            bitvec.pad_from_right(64 - size)
+            if size < 63:
+                bitvec.pad_from_right(64 - size)
             for round_key in round_keys:
                 [LE, RE] = bitvec.divide_into_two()         #splits into two halfs
                 LE = RE
