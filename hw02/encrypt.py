@@ -75,11 +75,11 @@ s_boxes[7] = [ [13,2,8,4,6,15,11,1,10,9,3,14,5,0,12,7],
 
 def get_encryption_key():
     while True:
-        key = raw_input("Enter 8 character key: ");
+        key = input("Enter 8 character key: ")
         if len(key) == 8:
             break
         else:
-            print "\nYou have to enter exactly 8 characters!\n"
+            print("\nYou have to enter exactly 8 characters!\n")
             continue
     #creates a bitvector rep. of the key
     key = BitVector(textstring=key)
@@ -88,11 +88,11 @@ def get_encryption_key():
 
 def get_enc_or_dec():
     while True:
-        enc_or_dec = raw_input("Do you want to encrypt(type e) or decrypt(type d)? ");
+        enc_or_dec = input("Do you want to encrypt(type e) or decrypt(type d)? ");
         if enc_or_dec == "e" or enc_or_dec == "d":
             break
         else:
-            print "\nChoose either e or d!\n"
+            print("\nChoose either e or d!\n")
             continue
     return enc_or_dec
 
@@ -134,7 +134,7 @@ def encrypt():
         round_keys.reverse()
     else:
         if not os.access("encrypted.txt", os.W_OK):
-            print "Can't open the file because it is not writable"
+            print("Can't open the file because it is not writable")
             sys.exit(2)
         fileOutput = open('encrypted.txt', 'wb')
 
@@ -149,7 +149,7 @@ def encrypt():
                 [LE, RE] = bitvec.divide_into_two()         #splits into two halfs
                 LE = RE
                 newRE = RE.permute(expansion_permutation) #expansion permutation
-                out_xor = newRE ^ round_key                 #xoring the round key and epanded perm
+                out_xor = newRE ^ round_key                 #xoring the round key and expanded perm
                 newRE = s_box_substitution(out_xor)       #using s-tables and output 32 bits
                 newRE = newRE.permute(p_box_perm)         #p-box perm
                 newRE = LE ^ newRE
