@@ -82,19 +82,18 @@ def get_encryption_key():
             continue
     #creates a bitvector rep. of the key
     key = BitVector(textstring=key)
-    #six_bit_s = [key[x:x + 8] for x in range(64) if x % 8 == 0]  # seperates the 48 bit to 6 parts of 8 bits
-    #num=0
-    #for eight in six_bit_s:
-    #    print num*8,
-    #    print eight
-
-    #    num = num + 1
     key = key.permute(key_permutation_1) #initial permutation of the key
-    #six_bit_segs = [key[x:x + 8] for x in range(54) if x % 8 == 0]  # seperates the 48 bit to 6 parts of 8 bits
-    #for eight in six_bit_segs:
-    #    print eight
-        #print eight.get_bitvector_in_ascii()
     return key
+
+def get_enc_or_dec():
+    while True:
+        enc_or_dec = raw_input("Do you want to encrypt(type e) or decrypt(type d)? ");
+        if enc_or_dec == "e" or enc_or_dec == "d":
+            break
+        else:
+            print "\nChoose either e or d!\n"
+            continue
+    return enc_or_dec
 
 def extract_round_key( key_after_per_1 ):
     round_key_list = [] 
@@ -122,16 +121,24 @@ def s_box_substitution ( out_xor ):
     return output
 
 def encrypt():
-    if not os.access("encrypted.txt",os.W_OK):
-        print "Can't open the file because it is not writable"
-        sys.exit(2)
 
-    fileOutput = open('encrypted.txt', 'wb')
     key = get_encryption_key()
-
-    print key.get_bitvector_in_ascii()
-
+    #print key.get_bitvector_in_ascii()
     round_keys = extract_round_key( key )                   #finds an array of keys for each round of encryption
+    enc_or_dec=get_enc_or_dec()
+
+    if enc_or_dec == "d":
+        fileOutput = open('decrypted.txt', 'wb')
+        if not os.access("decrypted.txt", os.W_OK):
+            print "Can't open the file because it is not writable"
+            sys.exit(2)
+        round_keys.reverse()
+    else:
+        if not os.access("encrypted.txt", os.W_OK):
+            print "Can't open the file because it is not writable"
+            sys.exit(2)
+        fileOutput = open('encrypted.txt', 'wb')
+
     bv = BitVector(filename = 'message.txt' )
     while bv.more_to_read:
         bitvec = bv.read_bits_from_file( 64 )
