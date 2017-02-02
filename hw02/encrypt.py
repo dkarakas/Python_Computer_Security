@@ -101,11 +101,9 @@ def extract_round_key( key_after_per_1 ):
     key_temp = key_after_per_1.deep_copy()                   #copys the key so I don't mess the original version
     for round in range(16):
         [left_half, right_half] = key_temp.divide_into_two() #separating the key into two parts
-
         left_half << shifts_for_round_key_gen[round]         #shifting each half
-        right_half << shifts_for_round_key_gen[round] 
-
-        key_temp = left_half + right_half                    #combining the new halfs
+        right_half << shifts_for_round_key_gen[round]
+        key_temp = (left_half + right_half)                 #combining the new halfs
         round_key = key_temp.permute(key_permutation_2)      #making the key to 46 bits
         round_key_list.append(round_key)
     return round_key_list
@@ -113,6 +111,7 @@ def extract_round_key( key_after_per_1 ):
 def s_box_substitution ( out_xor ):
     output = BitVector( size = 32 )                         #new vector created for output
     #six_bit_seg = [ out_xor[x:x+6] for x in range(48) if x % 6 == 0 ]  #seperates the 48 bit to 6 parts of 8 bits
+    #{print(out_xor[x*6:x*6+6], end = " ") for x in range(8)}
     six_bit_seg = [ out_xor[x*6:x*6+6] for x in range(8)]
     counter = 0                                             #keep track how many 4 bits were written
     for seg in six_bit_seg:
@@ -132,30 +131,30 @@ def encrypt():
     if enc_or_dec == "d":
         fileOutput = open('decrypted.txt', 'wb')
         round_keys.reverse()
+        bv = BitVector(filename='encrypted.txt')
     else:
+        fileOutput = open('encrypted.txt', 'wb')
         if not os.access("encrypted.txt", os.W_OK):
             print("Can't open the file because it is not writable")
             sys.exit(2)
-        fileOutput = open('encrypted.txt', 'wb')
+        bv = BitVector(filename='message_org.txt')
 
-    bv = BitVector(filename = 'message.txt' )
     while bv.more_to_read:
         bitvec = bv.read_bits_from_file( 64 )
         size = bitvec.length()
         if size > 0:                             #Note: is is true?
-            if size < 63:
+            print(str(size))
+            if size < 64:
                 bitvec.pad_from_right(64 - size)
+            [LE, RE] = bitvec.divide_into_two()  # splits into two halfs
             for round_key in round_keys:
-                [LE, RE] = bitvec.divide_into_two()         #splits into two halfs
-                LE = RE
                 newRE = RE.permute(expansion_permutation) #expansion permutation
-                out_xor = newRE ^ round_key                 #xoring the round key and expanded perm
-                newRE = s_box_substitution(out_xor)       #using s-tables and output 32 bits
-                newRE = newRE.permute(p_box_perm)         #p-box perm
+                newRE = newRE ^ round_key               #xoring the round key and expanded perm
+                newRE = s_box_substitution(newRE)       #using s-tables and output 32 bits
+                newRE = newRE.permute(p_box_perm)       #p-box perm
                 newRE = LE ^ newRE
-                bitvec = LE + newRE
-                [LE, RE] = [newRE, LE]  # needed for one last swap after the 16th round
-            bitvec = LE + RE
+                [LE, RE] = [RE, newRE]  # needed for one last swap after the 16th round
+            bitvec = RE + LE
             bitvec.write_to_file(fileOutput)
 
     bv.close_file_object()  # closing the file for reading
