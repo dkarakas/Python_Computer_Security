@@ -50,23 +50,28 @@ def ask_user_for_key():
     key_bv = BitVector( textstring = key )
     return key_bv
 
+def subBytes(wordToSubBytes):
+    word_into_bytes = []
+    for i in range(4):
+        word_into_bytes.append(wordToSubBytes[i*8:i*8+8])
+
+    c = BitVector(bitstring='01100011')
+    for num_byte, byte in enumerate(word_into_bytes):
+        #print(str(num_byte)  + " " + str(byte))
+        byte_mi = byte.gf_MI(BitVector( bitstring='100011011'),8)
+        b1, b2, b3, b4 = [byte_mi.deep_copy() for x in range(4)]
+        byte_mi ^=  (b1 >> 4) ^ (b2 >> 5) ^ (b3 >> 6) ^ (b4 >> 7) ^ c
+        wordToSubBytes[num_byte*8:num_byte*8+8] = byte_mi
+    return wordToSubBytes
+
 def gee(word_to_gee_2, round_constant):
     word_to_gee = word_to_gee_2.deep_copy()
     #Shift 1 byte to the left
     word_to_gee << 8
 
     #SubBytes
-    word_into_bytes = []
-    for i in range(4):
-        word_into_bytes.append(word_to_gee[i*8:i*8+8])
-
-    c = BitVector(bitstring='01100011')
-    for num_byte, byte in enumerate(word_into_bytes):
-        byte_mi = byte.gf_MI(BitVector( bitstring='100011011'),8)
-        b1, b2, b3, b4 = [byte_mi.deep_copy() for x in range(4)]
-        byte_mi ^=  (b1 >> 4) ^ (b2 >> 5) ^ (b3 >> 6) ^ (b4 >> 7) ^ c
-        word_to_gee[num_byte*8:num_byte*8+8] = byte_mi
-
+    word_to_gee = subBytes(word_to_gee)
+    #word_to_gee[0:8] = word_to_gee[0:8] ^ round_constant
     return  word_to_gee #before returning I xor the bits with the round constant
 
 def gen_round_const():
@@ -94,6 +99,8 @@ def key_schedule():
 
 def AES_algo():
     keys = key_schedule()
+
+    key_schedule_2 = []
 
 
 
