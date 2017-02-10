@@ -127,6 +127,9 @@ def AES_algo():
 
     encrypt(bvPlainFile,fileOutputEncr,keys)
 
+    bvPlainFile.close_file_object()
+    fileOutputEncr.close()
+
     try:
         fileOutputDecr = open('decrypted.txt', 'wb')
     except:
@@ -134,6 +137,10 @@ def AES_algo():
         sys.exit(1)
     bvEncrFile = BitVector(filename='encrypted.txt')
     decrypt(bvEncrFile,fileOutputDecr,keys)
+
+    bvEncrFile.close_file_object()
+    fileOutputDecr.close()
+
 
 if __name__ == "__main__":
     AES_algo()
