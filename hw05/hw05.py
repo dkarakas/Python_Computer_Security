@@ -1,5 +1,10 @@
 #! /bin/python
 
+#Homework Number:hw05
+#Name:Dimcho karakashev
+#ECN Login: dkarakas
+#Due Date: 02/10/17
+
 import BitVector
 from copy import deepcopy
 
