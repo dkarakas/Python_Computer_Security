@@ -10,7 +10,7 @@ from BitVector import *
 
 
 #As specified by the assignment
-E_KEY = 65537
+E_KEY = 3
 
 def gcd(a,b):
     while b:
@@ -50,9 +50,9 @@ def genKeys():
     return (E_KEY, D_KEY, n, p, q)
 
 
-def encrypt(E_KEY,n):
+def encrypt(E_KEY,n,filename):
     input_file = BitVector(filename='message.txt')
-    FILEOUT = open('output.txt', 'w')
+    FILEOUT = open(filename, 'w')
     while input_file.more_to_read:
         M = input_file.read_bits_from_file(128)
         size = M.length()
@@ -84,12 +84,26 @@ def ModExponent(M,E_KEY,n):
         M = (M * M) % n
     return BitVector(intVal = result, size = 256)
 
+def break_RSA(filename,filename_1,filename_2):
+    input_file_1 = BitVector(filename=filename)
+    input_file_2 = BitVector(filename=filename_1)
+    input_file_3 = BitVector(filename=filename_2)
+    FILEOUT = open('decrypted.txt', 'wb')
+    while input_file.more_to_read:
+        C = input_file.read_bits_from_file(256 * 2)
+        C = BitVector(hexstring=C.getTextFromBitVector())
+        D = ModExponent(int(C), D_KEY, n)
+        D = D[128:256]
+        D.write_to_file(FILEOUT)
+    input_file.close_file_object()
+    FILEOUT.close()
+
+
 if __name__ == "__main__":
     E_KEY, D_KEY, n, p, q = genKeys()
-    encrypt(E_KEY,n)
-    decrypt(D_KEY,n)
-    #print(D_KEY)
-    #print(n)
-    #print(E_KEY*D_KEY%n )
-
-
+    E_KEY_1, D_KEY_1, n_1, p_1, q_1 = genKeys()
+    E_KEY_2, D_KEY_2, n_2, p_1, q_2 = genKeys()
+    encrypt(E_KEY,n,"Encrypt_E_3.txt")
+    encrypt(E_KEY_1, n_1, "Encrypt_E_3_1.txt")
+    encrypt(E_KEY_2, n_2, "Encrypt_E_3_2.txt")
+    break_RSA("Encrypt_E_3.txt","Encrypt_E_3_1.txt","Encrypt_E_3_2.txt")

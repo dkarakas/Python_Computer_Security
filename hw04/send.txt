@@ -52,7 +52,7 @@ def subBytes(wordToSubBytes, enc_dec):
             else:
                 byte_mi = byte
             b1, b2, b3, b4 = [byte_mi.deep_copy() for x in range(4)]
-            byte_mi ^= (b1 >> 2) ^ (b2 >> 5) ^ (b3 >> 7) ^ d
+            byte_mi ^= (b1 >> 2) ^ (b2 >> 5) ^ (b4 >> 7) ^ d
             wordToSubBytes[num_byte * 8:num_byte * 8 + 8] = byte_mi
     return wordToSubBytes
 
@@ -136,10 +136,10 @@ def mixColumns(bitVec, dec_or_enc):
     return  bitVec
 
 def encrypt(bv,fileOut,keys):
-    cur = 0
+    #cur = 0
     while bv.more_to_read:
         bitvec = bv.read_bits_from_file( 128 )
-        print("Len :" + str(cur))
+        #print("Len :" + str(cur))
         size = bitvec.length()
         ##Xor with the 4 words of the key schedule
         for i in range(4):
@@ -160,15 +160,15 @@ def encrypt(bv,fileOut,keys):
                 bitvec ^= keys[i*4] ^ keys[i*4 + 1] ^ keys[i*4 + 2] ^ keys[i*4 + 3]
         hexStrToOutput = bitvec.get_bitvector_in_hex()
         fileOut.write(hexStrToOutput)
-        cur += 16
+        #cur += 16
 
 
 def decrypt(encrypted_str,fileOut,keys):
-    cur = 0
+    #cur = 0
     assert(len(encrypted_str) % 32 == 0), "Not encrypted right! Missing chars!"
     for i in range(int(len(encrypted_str)/32)):
         bitvec = BitVector(hexstring = encrypted_str[i*32: i*32 + 32])
-        print("Len :" + str(cur))
+        #print("Len :" + str(cur))
         size = bitvec.length()
         ##Xor the cypher with last 4 words
         for i in reversed(range(40,44)):
@@ -188,7 +188,7 @@ def decrypt(encrypted_str,fileOut,keys):
                 mixColumns(bitvec, "d")
 
         bitvec.write_to_file(fileOut)
-        cur += 16
+        #cur += 16
 
 
 
@@ -223,3 +223,11 @@ def AES_algo():
 
 if __name__ == "__main__":
     AES_algo()
+
+
+Key:yayboilermakers!
+
+Encrypted.txt:
+c79be573c6e573c626fac6199cdfa0c12693c653268426498426539bfb74fe9c10c6051984e5021973c69b0239740bc1e5052093f4c6f40219c605269c7481b3fa57c60219d7c6fb9b26d7c637c5b3af02c619fa1973192693c626178cdf7b37e5d78ec6f9d7c69302022073b3c58c37539326e5fac6f40219c6fb02de7b6937d79be5fa20c6fa02d79be5fa6874399473c6fb8402fa49c6fbe5d79bb30b7be5c6f9fac64c2605d79cc6fa027b77370949c6e573c6fb8402fa49c6fb373ce537e5d72ec6f9d7c6e573c619fadec5de9493c6d79b0219499b06c686d7de887d37e5d79cc626fa57c6d79be5fac574ba3d0219d7c6e5d79cc61719d7c67d39de3773d7e59393c61026f4c6fa027b7481b3fa57c626faf4d79be5fa49c68c886968c61c19d7c6e54cc6f40219c639392485c626d7c6e5d7c626c617e5d720747df819c610e5499bd7c64ce5fa57b339debe2ec6c784f4c6d702c65702c6a039b3b0e5d79b0219d7c626faf4c6058c7df02be5fa492ec6f20219c61002737b7477fa0217261793f4c6fb02fa40d72074babec64ce58473d79cc64ce5fa57b37d9c4ad79be5fa49c6532684d7e505de7bbafa93f4c6025757c60284c619fadec5de9493c60284c6e5fac626faf4c6397d7d3757e57373e510e5932684c6d78c74ba09f4c6028457e5fa2684f4c6058cde77f873e5d7e502fa06c6c79b26d7b30ba037fa02d7c626d7c6269393c673dea377fae573e5fa499cc64c0284c6e57b7437afc6fa02c673d78426e5fac6d78c74bad30502105393e5739bc6e5fac6a039b3af9b0284d7c626c65326842649247d772bc626c673d719fad7c673e510377bbafac6d702c6d79b26d7c6fb9be5f077b394fac62619d79b0284c657e557b33ce5fa0219499b0219d7c6269393c68c1bb32be573c6170202209cc6fbe5d7e539debec6735302e593e5fa49c626c668398c6ec6fb84e5d7e5fa49c60002172074ba0957c6e5d7c6fb2673c6fa02c6a0deba2693c617020220c626d7c6d72e7d7b68fe
+Decrypted.txt:
+õõõõlõõllll			\llõlõllõlõõ	M:Mlõõõõlõ	M\\õõlõlõlõl	M:l×l×llõl×l	\:ollõllll	õ×llõ×llõM\\õlõllõll\	:×õõllll×õõl	M		õllõllllõ×õM\olõllõlõ×õll\		Žllõõllõllll	Mõ×llõ×lõõll\\o	l×õlõõl×\:	õ×õlll×l×õõlŽMo×lõ×õll×loõ×õllõll\M:l×lllõ×õõlll::\l×lõõlõl	:	ll×lõ×llllõ×M	\lõlõ×lõõl×Mo	llõõõl×l×lo:õ×õ×lllõlõMo	õlllllõ\M		lllõlllõ×Mo	lõõõõ×õlõõl×MM	o×õõlllõlõ×õõ\	o	õl××lõll\\o	lõlõllllõl	M	×õõõõõlõl×MoŽõlõ×õllõõlõ		\õõ×õlõlõõl×M\	l×ll×lllõ\o		õõõllõlõõlõ\M	olllõ×õlõll×MoMõõõõõlõllo:oõõ×lllõlõll	M		lllõ×l×lõõ		o	l×l×õl×llõõ:	:	lll×õõl×õ×MM	lõ×lllo:	õõlllõllõ×Mo	lõõõõlllll	\	llõõ×õllllMoŽ×lõ×lllõlllo	oMlllll×l×l		

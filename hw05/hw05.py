@@ -37,7 +37,7 @@ class RC4:
             j = (j + copy_key[i]) % 256
             copy_key[i], copy_key[j] = copy_key[j], copy_key[i]
             k = ( copy_key[i] + copy_key[j]) % 256
-            encrypted_output += chr(copy_key[k] ^ ord(data))
+            encrypted_output += chr(copy_key[k] ^ ord(data))#making the assumption that we are passing string(data is a char)
         return encrypted_output
 
     def decrypt(self,dataToEncrypt):
@@ -63,16 +63,30 @@ def openFile(fileName):
     return (header, data)
 
 if __name__ == "__main__":
-    init = RC4("Cool key is")
+    init = RC4("Cool key")
     header, data = openFile("winterTown.ppm")
 
+    head_str = ""
     read_str = ""
+
+    for i in range(0,3):#converting the bytes into a string
+        for j in range(0, len(header[i])):  # converting the bytes into a string
+            head_str += chr(header[i][j])
+    print(header)
+    print(head_str)
     for i in range(0,len(data)):#converting the bytes into a string
         read_str += chr(data[i])
 
     encrypted = init.encrypt(read_str)
     decrypted = init.decrypt(encrypted)
+
     if read_str == decrypted:
         print("Good to go")
     else:
         print("some issue")
+
+
+    with open("output.ppm","w+") as encryptedPic:
+        encryptedPic.write(head_str)
+        encryptedPic.write(decrypted)
+

@@ -59,9 +59,7 @@ def gee(keyword, round_constant, byte_sub_table):
     newword = BitVector(size = 0)
     for i in range(4):
         newword += BitVector(intVal = byte_sub_table[rotated_word[8*i:8*i+8].intValue()], size = 8)
-        print(BitVector(intVal = byte_sub_table[rotated_word[8*i:8*i+8].intValue()], size = 8))
-
-    #newword[:8] ^= round_constant
+    newword[:8] ^= round_constant
     round_constant = round_constant.gf_multiply_modular(BitVector(intVal = 0x02), AES_modulus, 8)
     return newword, round_constant
 
@@ -75,7 +73,6 @@ def gen_key_schedule_128(key_bv):
     round_constant = BitVector(intVal = 0x01, size=8)
     for i in range(4):
         key_words[i] = key_bv[i*32 : i*32 + 32]
-
     for i in range(4,44):
         if i%4 == 0:
             kwd, round_constant = gee(key_words[i-1], round_constant, byte_sub_table)
