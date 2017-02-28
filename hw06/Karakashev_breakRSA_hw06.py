@@ -2,6 +2,8 @@
 
 from PrimeGenerator import PrimeGenerator
 from BitVector import *
+import numpy as np
+import sys
 
 #Homework Number: hw06
 #Name: Dimcho Karakashev
@@ -84,26 +86,70 @@ def ModExponent(M,E_KEY,n):
         M = (M * M) % n
     return BitVector(intVal = result, size = 256)
 
-def break_RSA(filename,filename_1,filename_2):
-    input_file_1 = BitVector(filename=filename)
-    input_file_2 = BitVector(filename=filename_1)
-    input_file_3 = BitVector(filename=filename_2)
-    FILEOUT = open('decrypted.txt', 'wb')
-    while input_file.more_to_read:
-        C = input_file.read_bits_from_file(256 * 2)
-        C = BitVector(hexstring=C.getTextFromBitVector())
-        D = ModExponent(int(C), D_KEY, n)
-        D = D[128:256]
-        D.write_to_file(FILEOUT)
-    input_file.close_file_object()
-    FILEOUT.close()
+def break_RSA(filename_1,filename_2,filename_3,n_1,n_2,n_3):
+    input_file_1 = BitVector(filename=filename_1)
+    input_file_2 = BitVector(filename=filename_2)
+    input_file_3 = BitVector(filename=filename_3)
+    n_tot = n_1*n_2*n_3
+    while input_file_1.more_to_read:
+        C_1 = input_file_1.read_bits_from_file(256 * 2)
+        C_2 = input_file_2.read_bits_from_file(256 * 2)
+        C_3 = input_file_3.read_bits_from_file(256 * 2)
+        C_1 = BitVector(hexstring=C_1.getTextFromBitVector())
+        C_2 = BitVector(hexstring=C_2.getTextFromBitVector())
+        C_3 = BitVector(hexstring=C_3.getTextFromBitVector())
+        M_1 = n_2 * n_3
+        M_2 = n_1 * n_3
+        M_3 = n_1 * n_2
+        M_1_inv = (BitVector(intVal=M_1)).multiplicative_inverse(BitVector(intVal=n_1))
+        M_2_inv = (BitVector(intVal=M_2)).multiplicative_inverse(BitVector(intVal=n_2))
+        M_3_inv = (BitVector(intVal=M_3)).multiplicative_inverse(BitVector(intVal=n_3))
+        C_1_vals = (int(C_1) % n_1,int(C_1) % n_2,int(C_1) % n_3)
+        C_2_vals = (int(C_2) % n_1, int(C_2) % n_2, int(C_2) % n_3)
+        C_3_vals = (int(C_3) % n_1, int(C_3) % n_2, int(C_3) % n_3)
+        result_vals = (C_1_vals[0] * C_2_vals[0] * C_3_vals[0] % n_1, \
+                       C_1_vals[1] * C_2_vals[1] * C_3_vals[1] % n_2, \
+                       C_1_vals[2] * C_2_vals[2] * C_3_vals[2] % n_3)
+        m_cubed = (result_vals[0] * M_1 * int(M_1_inv) + result_vals[1] * M_2 * int(M_2_inv) + result_vals[2] * M_3 * int(M_3_inv)) % n_tot
+        print(m_cubed)
+        plain_message = solve_pRoot(3, m_cubed)
+        print(plain_message)
+    input_file_1.close_file_object()
+
+def solve_pRoot(p,y):
+    """GIVEN FUNCTION"""
+    p = np.long(p);
+    y = np.long(y);
+    # Initial guess for xk
+    try:
+        xk = np.long(pow(y,1.0/p));
+    except:
+        # Necessary for larger value of y
+        # Approximate y as 2^a * y0
+        y0 = y;
+        a = 0;
+        while (y0 > sys.float_info.max):
+            y0 = y0 >> 1;
+            a += 1;
+        # log xk = log2 y / p
+        # log xk = (a + log2 y0) / p
+        xk = np.long(pow(2.0, ( a + np.log2(float(y0)) )/ p ));
+
+    # Solve for x using Newton's Method
+    err_k = np.long(pow(xk,p))-y;
+    while (abs(err_k) > 1):
+        gk = p*np.long(pow(xk,p-1));
+        err_k = np.long(pow(xk,p))-y;
+        xk = np.long(-err_k/gk) + xk;
+    return xk
+
 
 
 if __name__ == "__main__":
-    E_KEY, D_KEY, n, p, q = genKeys()
     E_KEY_1, D_KEY_1, n_1, p_1, q_1 = genKeys()
-    E_KEY_2, D_KEY_2, n_2, p_1, q_2 = genKeys()
-    encrypt(E_KEY,n,"Encrypt_E_3.txt")
+    E_KEY_2, D_KEY_2, n_2, p_2, q_2 = genKeys()
+    E_KEY_3, D_KEY_3, n_3, p_3, q_3 = genKeys()
     encrypt(E_KEY_1, n_1, "Encrypt_E_3_1.txt")
     encrypt(E_KEY_2, n_2, "Encrypt_E_3_2.txt")
-    break_RSA("Encrypt_E_3.txt","Encrypt_E_3_1.txt","Encrypt_E_3_2.txt")
+    encrypt(E_KEY_3, n_3, "Encrypt_E_3_3.txt")
+    break_RSA("Encrypt_E_3_1.txt", "Encrypt_E_3_2.txt", "Encrypt_E_3_3.txt", n_1, n_2, n_3)

@@ -25,8 +25,6 @@ def solve_pRoot(p,y):
         while (y0 > sys.float_info.max):
             y0 = y0 >> 1;
             a += 1;
-        # log xk = log2 y / p
-        # log xk = (a + log2 y0) / p
         xk = long(pow(2.0, ( a + np.log2(float(y0)) )/ p ));
 
     # Solve for x using Newton's Method
