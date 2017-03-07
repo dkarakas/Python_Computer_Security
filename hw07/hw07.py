@@ -33,9 +33,10 @@ K_const = ["428a2f98d728ae22", "7137449123ef65cd", "b5c0fbcfec4d3b2f", "e9b5dba5
 
 def getWords(read1024bitmessage):
     wordsToReturn = [None] * 80
+    #initilize the first 16 values with the original input
     wordsToReturn[0:16] = [read1024bitmessage[i*64:i*64+64] for i in range(0,16)]
-     #for i in range(0,16):
-          #wordsToReturn[i] = read1024bitmessage[i*64:i*64+64]
+
+    #calculates ther rest of the 80 words used for the rounds
     for i in range(16,80):
          value_to_add = (int(wordsToReturn[i-16]) + int(sigma0(wordsToReturn[i-15])) \
                           +(int(wordsToReturn[i-7])) + int(sigma1(wordsToReturn[i-2]))) % 2**64
@@ -43,26 +44,32 @@ def getWords(read1024bitmessage):
     return wordsToReturn
 
 def sigma0(word):
-     word_to_man0 = word.deep_copy()
-     word_to_man1 = word.deep_copy()
-     word_to_man2 = word.deep_copy()
-     return  (word_to_man0 >> 1) ^ (word_to_man1 >> 8) ^ (word_to_man2.shift_right(7))
+    """Used in generation of the words"""
+    word_to_man0 = word.deep_copy()
+    word_to_man1 = word.deep_copy()
+    word_to_man2 = word.deep_copy()
+    return  (word_to_man0 >> 1) ^ (word_to_man1 >> 8) ^ (word_to_man2.shift_right(7))
 
 def sigma1(word):
-     word_to_man0 = word.deep_copy()
-     word_to_man1 = word.deep_copy()
-     word_to_man2 = word.deep_copy()
-     return  (word_to_man0 >> 19) ^ (word_to_man1 >> 61) ^ (word_to_man2.shift_right(6))
+    """Used in generation of the words"""
+    word_to_man0 = word.deep_copy()
+    word_to_man1 = word.deep_copy()
+    word_to_man2 = word.deep_copy()
+    return  (word_to_man0 >> 19) ^ (word_to_man1 >> 61) ^ (word_to_man2.shift_right(6))
 
 def getFileIn1024bits(inputfile):
+    """Puts the file into block of 1024 bits"""
     input_text = open(inputfile, 'r+').read()
-    num_bytes = len(input_text)
+    num_bytes = len(input_text)#determines the number of bytes in the input file
 
     list_File_return = []
+
     bv = BitVector(filename = inputfile)
     while(bv.more_to_read):
         bv_read = bv.read_bits_from_file(1024)
         list_File_return.append(bv_read)
+
+    #Checks in order to detirmine if I have to append one more block for the string length
     if len(list_File_return[-1]) < 895:
         list_File_return[-1] = list_File_return[-1] + BitVector(intVal = 1, size = 1)
         zeros_to_append = 1024 - (len(list_File_return[-1]) + 128)
