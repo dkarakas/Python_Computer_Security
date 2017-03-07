@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 
+#Homework Number: hw07
+#Name: Dimcho Karakashev
+#ECN Login: dkarakas
+#Due Date: 03/07/17
+
+
 from BitVector import *
-
-a = BitVector(hexstring="6a09e667f3bcc908")
-b = BitVector(hexstring="bb67ae8584caa73b")
-c = BitVector(hexstring="3c6ef372fe94f82b")
-d = BitVector(hexstring="a54ff53a5f1d36f1")
-e = BitVector(hexstring="510e527fade682d1")
-f = BitVector(hexstring="9b05688c2b3e6c1f")
-g = BitVector(hexstring="1f83d9abfb41bd6b")
-h = BitVector(hexstring="5be0cd19137e2179")
-
+from hashlib import *
 
 K_const = ["428a2f98d728ae22", "7137449123ef65cd", "b5c0fbcfec4d3b2f", "e9b5dba58189dbbc",
      "3956c25bf348b538", "59f111f1b605d019", "923f82a4af194f9b", "ab1c5ed5da6d8118",
@@ -35,20 +32,21 @@ K_const = ["428a2f98d728ae22", "7137449123ef65cd", "b5c0fbcfec4d3b2f", "e9b5dba5
 
 
 def getWords(read1024bitmessage):
-     wordsToReturn = [None] * 80
-     wordsToReturn[0:16] = [read1024bitmessage[i*64:i*64+64] for i in range(0,16)]
+    wordsToReturn = [None] * 80
+    wordsToReturn[0:16] = [read1024bitmessage[i*64:i*64+64] for i in range(0,16)]
      #for i in range(0,16):
           #wordsToReturn[i] = read1024bitmessage[i*64:i*64+64]
-     for i in range(16,79):
-          value_to_add = (((int(wordsToReturn[i-16]) + int(sigma0(wordsToReturn[i-15]))) % 2**64) \
-                              + ((int(wordsToReturn[i-7]) + int(sigma1(wordsToReturn[i-2]))) % 2**64)) % 2**64
-          wordsToReturn[i] = BitVector(intVal = value_to_add, size = 64)
+    for i in range(16,80):
+         value_to_add = (int(wordsToReturn[i-16]) + int(sigma0(wordsToReturn[i-15])) \
+                          +(int(wordsToReturn[i-7])) + int(sigma1(wordsToReturn[i-2]))) % 2**64
+         wordsToReturn[i] = BitVector(intVal = value_to_add, size = 64)
+    return wordsToReturn
 
 def sigma0(word):
      word_to_man0 = word.deep_copy()
      word_to_man1 = word.deep_copy()
      word_to_man2 = word.deep_copy()
-     return  (word_to_man0 >> 1) ^ (word_to_man1 >> 7) ^ (word_to_man2.shift_right(7))
+     return  (word_to_man0 >> 1) ^ (word_to_man1 >> 8) ^ (word_to_man2.shift_right(7))
 
 def sigma1(word):
      word_to_man0 = word.deep_copy()
@@ -57,12 +55,114 @@ def sigma1(word):
      return  (word_to_man0 >> 19) ^ (word_to_man1 >> 61) ^ (word_to_man2.shift_right(6))
 
 def getFileIn1024bits(inputfile):
-    pass
+    input_text = open(inputfile, 'r+').read()
+    num_bytes = len(input_text)
+
+    list_File_return = []
+    bv = BitVector(filename = inputfile)
+    while(bv.more_to_read):
+        bv_read = bv.read_bits_from_file(1024)
+        list_File_return.append(bv_read)
+    if len(list_File_return[-1]) < 895:
+        list_File_return[-1] = list_File_return[-1] + BitVector(intVal = 1, size = 1)
+        zeros_to_append = 1024 - (len(list_File_return[-1]) + 128)
+        list_File_return[-1] = list_File_return[-1] + BitVector(intVal = 0, size = zeros_to_append) \
+                                + BitVector(intVal = num_bytes*8, size = 128)
+    elif len(list_File_return[-1]) <= 1023:
+        list_File_return[-1] = list_File_return[-1] + BitVector(intVal=1, size=1)
+        zeros_to_append = 1024 - len(list_File_return[-1])
+        list_File_return[-1] = list_File_return[-1] + BitVector(intVal=0, size=zeros_to_append)
+        list_File_return.append(BitVector(intVal = num_bytes*8, size = 1024))
+    else:
+        list_File_return.append(BitVector(intVal = 1, size = 1) + BitVector(intVal = num_bytes*8, size = 1023))
+
+    bv.close_file_object()
+    return list_File_return
+
 
 def hash(inputfile):
     fileIn1024 = getFileIn1024bits(inputfile)
+    a = BitVector(hexstring="6a09e667f3bcc908")
+    b = BitVector(hexstring="bb67ae8584caa73b")
+    c = BitVector(hexstring="3c6ef372fe94f82b")
+    d = BitVector(hexstring="a54ff53a5f1d36f1")
+    e = BitVector(hexstring="510e527fade682d1")
+    f = BitVector(hexstring="9b05688c2b3e6c1f")
+    g = BitVector(hexstring="1f83d9abfb41bd6b")
+    h = BitVector(hexstring="5be0cd19137e2179")
+    for block in fileIn1024:
+        wordList = getWords(block)
+        a_ini = int(a)
+        b_ini = int(b)
+        c_ini = int(c)
+        d_ini = int(d)
+        e_ini = int(e)
+        f_ini = int(f)
+        g_ini = int(g)
+        h_ini = int(h)
+        for i in range(80):
+            T1 = (int(h) + int(CH(e,f,g)) + int(SUME(e)) + int(wordList[i]) + int(BitVector(hexstring = K_const[i]))) % 2**64
+            T2 = (int(SUMA(a)) + int(MAJ(a,b,c))) % 2 ** 64
+            h = g
+            g = f
+            f = e
+            e = BitVector(intVal = (int(d) + T1) % (2 ** 64), size = 64)
+            d = c
+            c = b
+            b = a
+            a = BitVector(intVal = (T1 + T2)  % 2 ** 64, size = 64)
 
+        a = (int(a) + a_ini) % 2 ** 64
+        b = (int(b) + b_ini) % 2 ** 64
+        c = (int(c) + c_ini) % 2 ** 64
+        d = (int(d) + d_ini) % 2 ** 64
+        e = (int(e) + e_ini) % 2 ** 64
+        f = (int(f) + f_ini) % 2 ** 64
+        g = (int(g) + g_ini) % 2 ** 64
+        h = (int(h) + h_ini) % 2 ** 64
+        a = BitVector(intVal=a, size=64)
+        b = BitVector(intVal=b, size=64)
+        c = BitVector(intVal=c, size=64)
+        d = BitVector(intVal=d, size=64)
+        e = BitVector(intVal=e, size=64)
+        f = BitVector(intVal=f, size=64)
+        g = BitVector(intVal=g, size=64)
+        h = BitVector(intVal=h, size=64)
+    return a + b + c + d + e + f + g + h
+
+def CH(e,f,g):
+    e_copy = e.deep_copy()
+    f_copy = f.deep_copy()
+    g_copy = g.deep_copy()
+    return (e_copy & f_copy) ^ (~e_copy & g_copy)
+
+def MAJ(a,b,c):
+    a_copy = a.deep_copy()
+    b_copy = b.deep_copy()
+    c_copy = c.deep_copy()
+    return (a_copy & b_copy) ^ (a_copy & c_copy) ^ (b_copy & c_copy)
+
+def SUMA(a):
+    a_copy = a.deep_copy()
+    a_copy1 = a.deep_copy()
+    a_copy2 = a.deep_copy()
+    return (a_copy >> 28) ^ (a_copy1 >> 34) ^ (a_copy2 >> 39)
+
+def SUME(e):
+    e_copy = e.deep_copy()
+    e_copy1 = e.deep_copy()
+    e_copy2 = e.deep_copy()
+    return (e_copy >> 14) ^ (e_copy1 >> 18) ^ (e_copy2 >> 41)
 
 if __name__ == "__main__":
-    #getWords(a)
-    pass
+    hash_val = hash("Input.txt")
+
+
+    with open ("output.txt", 'w') as MyFile:
+        MyFile.write(hash_val.get_hex_string_from_bitvector())
+
+    with open("Input.txt", "rb") as testHash:
+        file = testHash.read()
+
+    if hash_val.get_hex_string_from_bitvector() == sha512(file).hexdigest():
+        print("Correct hash!")
